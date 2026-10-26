@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">LeyLink</string>
+    <string name="title">LeyLink · Blackout mesh</string>
+
+    <string name="label_ble">BLE hardware</string>
+    <string name="label_bluetooth">Bluetooth</string>
+    <string name="label_permissions">Permissions</string>
+    <string name="label_mesh">Disaster Mode</string>
+
+    <string name="yes">yes</string>
+    <string name="no">no</string>
+    <string name="state_on">on</string>
+    <string name="state_off">off</string>
+    <string name="state_granted">granted</string>
+    <string name="state_missing">missing</string>
+    <string name="state_running">running</string>
+    <string name="state_stopped">stopped</string>
+
+    <string name="hint_bluetooth">Bluetooth can stay on while airplane mode is enabled.</string>
+
+    <string name="btn_grant">Grant permissions</string>
+    <string name="btn_mode_on">Start Disaster Mode</string>
+    <string name="btn_mode_off">Stop Disaster Mode</string>
+
+    <string name="channel_name">Mesh service</string>
+    <string name="notif_title">LeyLink Disaster Mode</string>
+    <string name="notif_text">Relaying emergency messages over Bluetooth</string>
+</resources>

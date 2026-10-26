@@ -1,0 +1,4 @@
+<resources>
+    <!-- Window theme only (splash/background). The visible UI is themed in Compose. -->
+    <style name="Theme.LeyLink" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>
