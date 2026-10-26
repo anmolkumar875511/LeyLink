@@ -12,7 +12,7 @@ import com.leylink.core.port.TransportEvent
 import com.leylink.core.router.RouterConfig
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -21,7 +21,7 @@ import org.junit.Test
 
 /**
  * End-to-end scenarios on simulated radios. Each test mirrors a lemma or rule from the README proofs.
- * `advanceUntilIdle()` lets every router coroutine run until nothing is left to do, which also proves
+ * `runCurrent()` lets every router coroutine run until nothing is left to do, which also proves
  * that the flood terminates (otherwise the test would never finish).
  */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -41,7 +41,7 @@ class MeshRouterScenarioTest {
         net.link(b.id, c.id) // A and C are never linked
 
         a.router.send(PacketType.SOS, "help")
-        advanceUntilIdle()
+        runCurrent()
 
         assertTrue(a.delivered.isEmpty())
         val atB = b.delivered.single()
@@ -63,14 +63,14 @@ class MeshRouterScenarioTest {
 
         net.link(a.id, b.id)
         a.router.send(PacketType.SOS, "help")
-        advanceUntilIdle()
+        runCurrent()
         assertEquals(1, b.delivered.size)
         assertTrue(c.delivered.isEmpty())
 
         net.unlink(a.id, b.id) // A walks away
         clock.advance(10 * 60 * 1000L) // ten minutes pass
         net.link(b.id, c.id) // C finally comes into range of B
-        advanceUntilIdle()
+        runCurrent()
 
         val atC = c.delivered.single()
         assertEquals(2, atC.hop)
@@ -83,7 +83,7 @@ class MeshRouterScenarioTest {
         nodes.zipWithNext().forEach { (x, y) -> net.link(x.id, y.id) }
 
         nodes[0].router.send(PacketType.CHAT, "hello")
-        advanceUntilIdle()
+        runCurrent()
 
         val reached = nodes.map { it.delivered.size }
         assertEquals(listOf(0, 1, 1, 1, 0, 0, 0), reached) // exactly the nodes within 3 hops
@@ -111,14 +111,14 @@ class MeshRouterScenarioTest {
         net.link(w1.id, w2.id)
 
         a.router.send(PacketType.SOS, "help")
-        advanceUntilIdle()
+        runCurrent()
 
         assertEquals(3, z.delivered.single().hop) // arrived the long way round, ttl 1
         assertTrue(w1.delivered.isEmpty())
         assertTrue(w2.delivered.isEmpty())
 
         net.link(a.id, z.id) // the shorter path appears
-        advanceUntilIdle()
+        runCurrent()
 
         assertEquals(1, z.delivered.size) // Z does not show the message a second time
         assertEquals(2, w1.delivered.single().hop)
@@ -134,10 +134,10 @@ class MeshRouterScenarioTest {
         a.router.send(PacketType.CHAT, "c2")
         a.router.send(PacketType.CHAT, "c3")
         a.router.send(PacketType.SOS, "help") // queued last, must be sent first
-        advanceUntilIdle()
+        runCurrent()
 
         net.link(a.id, b.id)
-        advanceUntilIdle()
+        runCurrent()
 
         assertEquals(listOf("help", "c1", "c2", "c3"), b.delivered.map { it.text })
     }
@@ -150,7 +150,7 @@ class MeshRouterScenarioTest {
         val text = "x".repeat(600)
 
         a.router.send(PacketType.CHAT, text)
-        advanceUntilIdle()
+        runCurrent()
 
         assertEquals(text, b.delivered.single().text)
         assertEquals(4, net.framesSent) // 632 bytes at 169 bytes of data per frame
@@ -164,7 +164,7 @@ class MeshRouterScenarioTest {
         for (n in nodes) {
             repeat(5) { k -> n.router.send(PacketType.SOS, "sos ${n.id} #$k") }
         }
-        advanceUntilIdle()
+        runCurrent()
 
         for (n in nodes) {
             assertEquals(25, n.delivered.size) // everybody else's 5 messages
@@ -199,7 +199,7 @@ class MeshRouterScenarioTest {
         for (frame in Chunker.split(inflated.msgId, bytes)) {
             b.transport.push(TransportEvent.FrameReceived(a.id, frame))
         }
-        advanceUntilIdle()
+        runCurrent()
 
         assertEquals(3L, b.router.stats.value.malformed)
         assertFalse(b.delivered.isNotEmpty())
