@@ -23,6 +23,22 @@ class FakeTransport(
     override val events: Flow<TransportEvent> = inbox.receiveAsFlow()
     override val connectedPeers: StateFlow<List<Peer>> = mutablePeers.asStateFlow()
 
+    /** Last beacon state the router asked for (beacon mode tests). */
+    @Volatile var beacon: Boolean = false
+        private set
+
+    /** Last digest the router published. */
+    @Volatile var digest: Int = 0
+        private set
+
+    override fun setBeacon(active: Boolean) {
+        beacon = active
+    }
+
+    override fun setDigest(digest: Int) {
+        this.digest = digest
+    }
+
     override suspend fun start() = Unit
 
     override suspend fun stop() = Unit

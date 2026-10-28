@@ -1,6 +1,7 @@
 package com.leylink.core.testing
 
 import com.leylink.core.model.MsgId
+import com.leylink.core.port.SeenEntry
 import com.leylink.core.port.SeenOutcome
 import com.leylink.core.port.SeenStore
 import kotlinx.coroutines.sync.Mutex
@@ -28,6 +29,13 @@ class InMemorySeenStore : SeenStore {
             }
             else -> SeenOutcome.DUPLICATE
         }
+    }
+
+    override suspend fun snapshot(limit: Int): List<SeenEntry> = mutex.withLock {
+        entries.entries
+            .sortedByDescending { it.value.recordedAtMs }
+            .take(limit)
+            .map { SeenEntry(it.key, it.value.ttl) }
     }
 
     override suspend fun purgeOlderThan(cutoffMs: Long): Int = mutex.withLock {

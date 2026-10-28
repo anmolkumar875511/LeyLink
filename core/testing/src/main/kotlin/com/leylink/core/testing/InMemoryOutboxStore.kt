@@ -40,6 +40,13 @@ class InMemoryOutboxStore : OutboxStore {
         }
     }
 
+    override suspend fun markPeerHas(peer: NodeId, msgId: MsgId, peerBestTtl: Int) {
+        mutex.withLock {
+            val stored = items[msgId]
+            if (stored != null && stored.entry.ttl <= peerBestTtl) stored.sentTo.add(peer)
+        }
+    }
+
     override suspend fun expireOlderThan(cutoffMs: Long): Int = mutex.withLock {
         val before = items.size
         items.values.removeAll { it.entry.createdAtMs < cutoffMs }

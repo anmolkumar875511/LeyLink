@@ -1,6 +1,7 @@
 package com.leylink.core.testing
 
 import com.leylink.core.model.MsgId
+import com.leylink.core.port.SeenEntry
 import com.leylink.core.port.SeenOutcome
 import com.leylink.core.port.SeenStore
 import com.leylink.core.router.DedupCache
@@ -23,6 +24,8 @@ class DedupCacheTest {
             recordCalls++
             return inner.recordIfBetter(msgId, ttl, nowMs)
         }
+
+        override suspend fun snapshot(limit: Int): List<SeenEntry> = inner.snapshot(limit)
 
         override suspend fun purgeOlderThan(cutoffMs: Long): Int {
             purgeCalls++

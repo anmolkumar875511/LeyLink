@@ -2,9 +2,13 @@ package com.leylink.core.testing
 
 import com.leylink.core.model.NodeId
 import com.leylink.core.model.Peer
+import com.leylink.core.port.BulkChannel
+import com.leylink.core.port.KeyDirectory
 import com.leylink.core.port.SendResult
+import com.leylink.core.port.Signer
 import com.leylink.core.port.TransportEvent
 import com.leylink.core.router.DedupCache
+import com.leylink.core.router.InMemoryKeyDirectory
 import com.leylink.core.router.MeshRouter
 import com.leylink.core.router.RouterConfig
 import com.leylink.core.time.Clock
@@ -26,12 +30,29 @@ class SimNetwork(private val clock: Clock) {
     /** Number of links currently up (|E| in the proofs). */
     val linkCount: Int get() = links.size
 
-    /** Creates a full node (transport, stores, router) with a deterministic id derived from [index]. */
-    fun addNode(index: Int, config: RouterConfig = RouterConfig()): SimNode {
+    /** Shared "air" for Wi-Fi Direct style bulk transfers between simulated nodes. */
+    val bulkHub = FakeBulkHub()
+
+    /**
+     * Creates a full node (transport, stores, router) with a deterministic id derived from [index].
+     * [signed] gives it a [HashSigner]; [bulk] gives it a [FakeBulkChannel] on the shared [bulkHub].
+     */
+    fun addNode(
+        index: Int,
+        config: RouterConfig = RouterConfig(),
+        signed: Boolean = false,
+        bulk: Boolean = false,
+        signer: Signer? = if (signed) HashSigner(index) else null,
+        keys: KeyDirectory = InMemoryKeyDirectory(),
+        bulkChannel: BulkChannel? = if (bulk) FakeBulkChannel(bulkHub) else null,
+    ): SimNode {
         val id = NodeId(byteArrayOf(0, 0, 0, 0, 0, 0, 0, index.toByte()))
         val transport = FakeTransport(id, this)
         val outbox = InMemoryOutboxStore()
-        val router = MeshRouter(id, transport, outbox, DedupCache(InMemorySeenStore()), clock, config)
+        val router = MeshRouter(
+            selfId = id, transport = transport, outbox = outbox, dedup = DedupCache(InMemorySeenStore()),
+            clock = clock, config = config, signer = signer, keys = keys, bulk = bulkChannel,
+        )
         transports[id] = transport
         return SimNode(id, transport, outbox, router)
     }
