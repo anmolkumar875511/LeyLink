@@ -1,0 +1,215 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "840a40228b68db8613fad269e05840ec",
+    "entities": [
+      {
+        "tableName": "outbox",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`msgIdHex` TEXT NOT NULL, `packet` BLOB NOT NULL, `priority` INTEGER NOT NULL, `ttl` INTEGER NOT NULL, `createdAtMs` INTEGER NOT NULL, PRIMARY KEY(`msgIdHex`))",
+        "fields": [
+          {
+            "fieldPath": "msgIdHex",
+            "columnName": "msgIdHex",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "packet",
+            "columnName": "packet",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "priority",
+            "columnName": "priority",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ttl",
+            "columnName": "ttl",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtMs",
+            "columnName": "createdAtMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "msgIdHex"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "outbox_sent",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`msgIdHex` TEXT NOT NULL, `peerHex` TEXT NOT NULL, PRIMARY KEY(`msgIdHex`, `peerHex`))",
+        "fields": [
+          {
+            "fieldPath": "msgIdHex",
+            "columnName": "msgIdHex",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "peerHex",
+            "columnName": "peerHex",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "msgIdHex",
+            "peerHex"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_outbox_sent_peerHex",
+            "unique": false,
+            "columnNames": [
+              "peerHex"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_outbox_sent_peerHex` ON `${TABLE_NAME}` (`peerHex`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "seen",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`msgIdHex` TEXT NOT NULL, `ttl` INTEGER NOT NULL, `recordedAtMs` INTEGER NOT NULL, PRIMARY KEY(`msgIdHex`))",
+        "fields": [
+          {
+            "fieldPath": "msgIdHex",
+            "columnName": "msgIdHex",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ttl",
+            "columnName": "ttl",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recordedAtMs",
+            "columnName": "recordedAtMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "msgIdHex"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_seen_recordedAtMs",
+            "unique": false,
+            "columnNames": [
+              "recordedAtMs"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_seen_recordedAtMs` ON `${TABLE_NAME}` (`recordedAtMs`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "messages",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`msgIdHex` TEXT NOT NULL, `originHex` TEXT NOT NULL, `typeCode` INTEGER NOT NULL, `text` TEXT NOT NULL, `timestampMs` INTEGER NOT NULL, `hop` INTEGER NOT NULL, `originTtl` INTEGER NOT NULL, `receivedAtMs` INTEGER NOT NULL, `mine` INTEGER NOT NULL, PRIMARY KEY(`msgIdHex`))",
+        "fields": [
+          {
+            "fieldPath": "msgIdHex",
+            "columnName": "msgIdHex",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "originHex",
+            "columnName": "originHex",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "typeCode",
+            "columnName": "typeCode",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "text",
+            "columnName": "text",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestampMs",
+            "columnName": "timestampMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hop",
+            "columnName": "hop",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "originTtl",
+            "columnName": "originTtl",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "receivedAtMs",
+            "columnName": "receivedAtMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mine",
+            "columnName": "mine",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "msgIdHex"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_messages_receivedAtMs",
+            "unique": false,
+            "columnNames": [
+              "receivedAtMs"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_messages_receivedAtMs` ON `${TABLE_NAME}` (`receivedAtMs`)"
+          }
+        ],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '840a40228b68db8613fad269e05840ec')"
+    ]
+  }
+}
