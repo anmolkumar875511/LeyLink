@@ -30,6 +30,8 @@ class NodeId(bytes: ByteArray) : Comparable<NodeId> {
     companion object {
         const val LENGTH = 8
 
+        fun fromHex(hex: String): NodeId = NodeId(hex.hexToBytes())
+
         fun random(random: SecureRandom = SecureRandom()): NodeId =
             NodeId(ByteArray(LENGTH).also { random.nextBytes(it) })
     }

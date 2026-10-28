@@ -21,6 +21,8 @@ class MsgId(bytes: ByteArray) {
     companion object {
         const val LENGTH = 8
 
+        fun fromHex(hex: String): MsgId = MsgId(hex.hexToBytes())
+
         fun random(random: SecureRandom = SecureRandom()): MsgId =
             MsgId(ByteArray(LENGTH).also { random.nextBytes(it) })
     }
