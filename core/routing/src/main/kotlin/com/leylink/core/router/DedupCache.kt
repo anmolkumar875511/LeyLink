@@ -1,6 +1,7 @@
 package com.leylink.core.router
 
 import com.leylink.core.model.MsgId
+import com.leylink.core.port.SeenEntry
 import com.leylink.core.port.SeenOutcome
 import com.leylink.core.port.SeenStore
 import kotlinx.coroutines.sync.Mutex
@@ -30,6 +31,14 @@ class DedupCache(
         lowerBounds[msgId] = maxOf(known ?: 0, ttl)
         outcome
     }
+
+    /** Highest TTL accepted so far for [msgId], 0 if never seen. */
+    suspend fun bestTtl(msgId: MsgId): Int = mutex.withLock { maxOf(lowerBounds[msgId] ?: 0, store.bestTtl(msgId)) }
+
+    suspend fun snapshot(limit: Int): List<SeenEntry> = store.snapshot(limit)
+
+    /** Forget the in-memory lower bounds, e.g. after a failed transaction rolled the store back. */
+    suspend fun clear() = mutex.withLock { lowerBounds.clear() }
 
     suspend fun purgeOlderThan(cutoffMs: Long): Int = mutex.withLock {
         lowerBounds.clear() // lower bounds are always safe to forget
