@@ -4,25 +4,53 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
+import androidx.core.content.ContextCompat
 import com.leylink.app.R
+import com.leylink.app.mesh.MeshEngine
 import com.leylink.app.mesh.MeshStatus
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 /**
- * Foreground service that will own the BLE transport and router (Disaster Mode).
- * Stage 1: lifecycle and the persistent notification only. Stages 3 and 4 wire in the mesh.
+ * Foreground service for Disaster Mode: keeps the mesh alive while the app is in the background.
+ * It follows the Bluetooth switch: the mesh starts when Bluetooth is on and stops when it goes off.
+ * (Airplane mode with Bluetooth switched back on keeps working, because no network is involved.)
  */
 @AndroidEntryPoint
 class MeshService : Service() {
 
     @Inject
     lateinit var status: MeshStatus
+
+    @Inject
+    lateinit var engine: MeshEngine
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private var receiverRegistered = false
+
+    private val bluetoothReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            when (intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)) {
+                BluetoothAdapter.STATE_ON -> startMesh()
+                BluetoothAdapter.STATE_TURNING_OFF, BluetoothAdapter.STATE_OFF -> stopMesh()
+            }
+        }
+    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         createChannel()
@@ -32,18 +60,44 @@ class MeshService : Service() {
             buildNotification(),
             ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE,
         )
+        if (!receiverRegistered) {
+            ContextCompat.registerReceiver(
+                this,
+                bluetoothReceiver,
+                IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED),
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
+            receiverRegistered = true
+        }
         status.setRunning(true)
-        // TODO(Stage 3/4): create and start BleTransport + MeshRouter here.
+        if (bluetoothIsOn()) startMesh()
         return START_STICKY
     }
 
     override fun onDestroy() {
-        // TODO(Stage 3/4): stop transport and router here.
+        if (receiverRegistered) {
+            unregisterReceiver(bluetoothReceiver)
+            receiverRegistered = false
+        }
+        // The service scope is cancelled below, so stop the engine from an independent scope.
+        CoroutineScope(Dispatchers.Default).launch { engine.stop() }
+        scope.cancel()
         status.setRunning(false)
         super.onDestroy()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
+
+    private fun startMesh() {
+        scope.launch { engine.start(scope) }
+    }
+
+    private fun stopMesh() {
+        scope.launch { engine.stop() }
+    }
+
+    private fun bluetoothIsOn(): Boolean =
+        getSystemService(BluetoothManager::class.java)?.adapter?.isEnabled == true
 
     private fun buildNotification(): Notification =
         NotificationCompat.Builder(this, CHANNEL_ID)
