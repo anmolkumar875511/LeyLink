@@ -11,7 +11,7 @@ android {
     defaultConfig {
         applicationId = "com.leylink.app" // change to your team's id if you like
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = "1.0.0"
     }
 
     buildFeatures {
@@ -47,6 +47,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.coroutines.android)
+    implementation(libs.bouncycastle) // Ed25519 (raw 32-byte keys, works on every API level)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
