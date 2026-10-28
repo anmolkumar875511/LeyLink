@@ -28,6 +28,14 @@ class PermissionPolicyTest {
     }
 
     @Test
+    fun `wifi direct permission is requested but never required`() {
+        assertTrue(PermissionPolicy.requestAll(33).contains(Manifest.permission.NEARBY_WIFI_DEVICES))
+        assertTrue(PermissionPolicy.requestAll(31).contains(Manifest.permission.ACCESS_FINE_LOCATION))
+        assertFalse(PermissionPolicy.required(33).contains(Manifest.permission.NEARBY_WIFI_DEVICES))
+        assertFalse(PermissionPolicy.required(31).contains(Manifest.permission.ACCESS_FINE_LOCATION))
+    }
+
+    @Test
     fun `notifications are requested from android 13 but never required`() {
         assertFalse(PermissionPolicy.requestAll(32).contains(Manifest.permission.POST_NOTIFICATIONS))
         assertTrue(PermissionPolicy.requestAll(33).contains(Manifest.permission.POST_NOTIFICATIONS))
