@@ -3,6 +3,8 @@ package com.leylink.app.di
 import com.leylink.app.device.AndroidDeviceCapabilities
 import com.leylink.app.device.DeviceCapabilities
 import com.leylink.app.mesh.MeshController
+import com.leylink.app.mesh.MeshEngine
+import com.leylink.app.mesh.MessagingController
 import com.leylink.app.mesh.ServiceMeshController
 import com.leylink.app.permissions.AndroidPermissionChecker
 import com.leylink.app.permissions.PermissionChecker
@@ -24,6 +26,9 @@ abstract class BindingsModule {
 
     @Binds
     abstract fun meshController(impl: ServiceMeshController): MeshController
+
+    @Binds
+    abstract fun messagingController(impl: MeshEngine): MessagingController
 
     @Binds
     abstract fun dispatcherProvider(impl: DefaultDispatcherProvider): DispatcherProvider
