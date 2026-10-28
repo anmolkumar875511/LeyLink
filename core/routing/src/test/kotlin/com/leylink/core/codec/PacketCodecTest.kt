@@ -127,3 +127,46 @@ class PacketCodecTest {
         assertNotEquals(a.toList(), other.toList())
     }
 }
+
+class PacketKeyCodecTest {
+    private fun packet(signature: ByteArray?, key: ByteArray?, ttl: Int = 5, hop: Int = 1) = Packet(
+        type = PacketType.SOS, priority = Priority.SOS, ttl = ttl, hop = hop,
+        msgId = MsgId(ByteArray(8) { 1 }), originId = NodeId(ByteArray(8) { 2 }),
+        timestampMs = 5, payload = "help".toByteArray(), signature = signature, publicKey = key,
+    )
+
+    @Test
+    fun `packet with public key and signature round trips`() {
+        val key = ByteArray(Packet.PUBLIC_KEY_SIZE) { 3 }
+        val sig = ByteArray(Packet.SIGNATURE_SIZE) { 4 }
+        val bytes = PacketCodec.encode(packet(sig, key))
+        assertEquals(Packet.HEADER_SIZE + 4 + Packet.PUBLIC_KEY_SIZE + Packet.SIGNATURE_SIZE, bytes.size)
+
+        val decoded = (PacketCodec.decode(bytes) as DecodeResult.Ok).packet
+        assertArrayEquals(key, decoded.publicKey())
+        assertArrayEquals(sig, decoded.signature())
+        assertTrue(decoded.hasPublicKey)
+    }
+
+    @Test
+    fun `a public key flag without a signature is rejected`() {
+        val bytes = PacketCodec.encode(packet(null, ByteArray(Packet.PUBLIC_KEY_SIZE)))
+        val reason = (PacketCodec.decode(bytes) as DecodeResult.Error).reason
+        assertTrue(reason.contains("without signature"))
+    }
+
+    @Test
+    fun `signed region is the same before and after the signature is attached`() {
+        val key = ByteArray(Packet.PUBLIC_KEY_SIZE) { 3 }
+        val before = PacketCodec.signedRegion(packet(null, key))
+        val after = PacketCodec.signedRegion(packet(ByteArray(Packet.SIGNATURE_SIZE) { 9 }, key, ttl = 2, hop = 4))
+        assertArrayEquals(before, after) // ttl, hop and the signature itself are not covered
+    }
+
+    @Test
+    fun `signed region covers the public key`() {
+        val a = PacketCodec.signedRegion(packet(null, ByteArray(Packet.PUBLIC_KEY_SIZE) { 3 }))
+        val b = PacketCodec.signedRegion(packet(null, ByteArray(Packet.PUBLIC_KEY_SIZE) { 4 }))
+        assertNotEquals(a.toList(), b.toList())
+    }
+}
