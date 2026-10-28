@@ -14,7 +14,8 @@ ksp {
 
 dependencies {
     implementation(projects.core.routing)
-    implementation(libs.room.runtime)
+    // RoomDatabase appears in this module's public API (LeyLinkDatabase), so consumers need it.
+    api(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
 }
