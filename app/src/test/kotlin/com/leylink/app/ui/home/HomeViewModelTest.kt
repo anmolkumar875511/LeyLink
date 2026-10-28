@@ -1,5 +1,6 @@
 package com.leylink.app.ui.home
 
+import com.leylink.core.model.PacketType
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -20,8 +21,9 @@ class HomeViewModelTest {
     private val permissions = FakePermissionChecker()
     private val capabilities = FakeDeviceCapabilities()
     private val mesh = FakeMeshController()
+    private val messaging = FakeMessagingController()
 
-    private fun viewModel() = HomeViewModel(permissions, capabilities, mesh)
+    private fun viewModel() = HomeViewModel(permissions, capabilities, mesh, messaging)
 
     /** stateIn(WhileSubscribed) only computes while someone collects, so keep one collector alive. */
     private fun TestScope.keepActive(vm: HomeViewModel) {
@@ -78,5 +80,54 @@ class HomeViewModelTest {
         vm.onToggleMesh()
         assertEquals(1, mesh.stopCalls)
         assertFalse(vm.uiState.value.meshRunning)
+    }
+    @Test
+    fun `sending a chat passes the trimmed draft to the mesh and clears it`() = runTest {
+        val vm = viewModel()
+        keepActive(vm)
+
+        vm.onDraftChange("  hello  ")
+        vm.onSend(PacketType.CHAT)
+
+        assertEquals(listOf(PacketType.CHAT to "hello"), messaging.sent)
+        assertEquals("", vm.uiState.value.draft)
+    }
+
+    @Test
+    fun `an invalid message keeps the draft and shows the error`() = runTest {
+        val vm = viewModel()
+        keepActive(vm)
+        messaging.failWith = "SOS is limited to 280 characters"
+
+        vm.onDraftChange("too long")
+        vm.onSend(PacketType.SOS)
+
+        assertEquals("too long", vm.uiState.value.draft)
+        assertEquals("SOS is limited to 280 characters", vm.uiState.value.error)
+
+        vm.onDraftChange("shorter") // typing again clears the error
+        assertEquals(null, vm.uiState.value.error)
+    }
+
+    @Test
+    fun `blank drafts are never sent`() = runTest {
+        val vm = viewModel()
+        keepActive(vm)
+
+        vm.onDraftChange("   ")
+        vm.onSend(PacketType.CHAT)
+
+        assertTrue(messaging.sent.isEmpty())
+        assertFalse(vm.uiState.value.canSend)
+    }
+
+    @Test
+    fun `peer count follows the transport`() = runTest {
+        val vm = viewModel()
+        keepActive(vm)
+
+        messaging.peers.value = 2
+
+        assertEquals(2, vm.uiState.value.peerCount)
     }
 }
