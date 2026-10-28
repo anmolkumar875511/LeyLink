@@ -2,13 +2,11 @@
     <string name="app_name">LeyLink</string>
     <string name="title">LeyLink · Blackout mesh</string>
 
-    <string name="label_ble">BLE hardware</string>
+    <string name="label_peers">Peers in range</string>
     <string name="label_bluetooth">Bluetooth</string>
     <string name="label_permissions">Permissions</string>
     <string name="label_mesh">Disaster Mode</string>
 
-    <string name="yes">yes</string>
-    <string name="no">no</string>
     <string name="state_on">on</string>
     <string name="state_off">off</string>
     <string name="state_granted">granted</string>
@@ -16,11 +14,22 @@
     <string name="state_running">running</string>
     <string name="state_stopped">stopped</string>
 
-    <string name="hint_bluetooth">Bluetooth can stay on while airplane mode is enabled.</string>
+    <string name="error_no_ble">This phone has no Bluetooth LE and cannot run LeyLink.</string>
+    <string name="hint_message">Message</string>
+    <string name="sos_chars_left">%1$d characters left for an SOS</string>
+    <string name="btn_send_chat">Send chat</string>
+    <string name="btn_send_sos">Send SOS</string>
 
     <string name="btn_grant">Grant permissions</string>
     <string name="btn_mode_on">Start Disaster Mode</string>
     <string name="btn_mode_off">Stop Disaster Mode</string>
+
+    <string name="stats_title">Mesh stats</string>
+    <string name="stats_traffic">Delivered %1$d · relayed %2$d · duplicates %3$d</string>
+    <string name="stats_security">Signed announces %1$d · rejected %2$d · SOS dropped %3$d</string>
+    <string name="stats_beacon_on">SOS beacon ON · %1$d waiting for a neighbour</string>
+    <string name="stats_beacon_off">SOS beacon off</string>
+    <string name="stats_bulk">Wi-Fi Direct: sent %1$d · received %2$d · fallbacks %3$d</string>
 
     <string name="channel_name">Mesh service</string>
     <string name="notif_title">LeyLink Disaster Mode</string>
