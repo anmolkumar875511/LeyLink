@@ -9,4 +9,6 @@ android {
 dependencies {
     implementation(projects.core.routing)
     implementation(libs.coroutines.android)
+
+    testImplementation(libs.junit)
 }
