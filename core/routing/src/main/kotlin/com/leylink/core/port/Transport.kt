@@ -22,6 +22,16 @@ interface Transport {
 
     /** Sends one frame (for BLE: one chunk frame) to a connected peer. Never throws for radio errors. */
     suspend fun send(peer: NodeId, frame: ByteArray): SendResult
+
+    /**
+     * Beacon mode: true while one of OUR SOS messages has not yet been handed to any neighbour. The radio
+     * should then make itself easy to find and let neighbours connect to us regardless of the usual
+     * tie-break. Default: no-op (fakes, Wi-Fi only transports).
+     */
+    fun setBeacon(active: Boolean) = Unit
+
+    /** [SyncDigest] of our dedup memory, advertised so neighbours can skip pointless connections. */
+    fun setDigest(digest: Int) = Unit
 }
 
 sealed interface TransportEvent {

@@ -2,6 +2,9 @@ package com.leylink.core.port
 
 import com.leylink.core.model.MsgId
 
+/** One remembered message and the best TTL accepted for it. */
+data class SeenEntry(val msgId: MsgId, val ttl: Int)
+
 /** Result of recording an incoming copy against the dedup memory. */
 enum class SeenOutcome {
     /** First time this message is seen: show it to the user and consider relaying. */
@@ -24,6 +27,9 @@ interface SeenStore {
 
     /** Atomically records [ttl] if it is strictly higher than the stored best. */
     suspend fun recordIfBetter(msgId: MsgId, ttl: Int, nowMs: Long): SeenOutcome
+
+    /** The [limit] most recently recorded entries, used to build the sync summary. */
+    suspend fun snapshot(limit: Int): List<SeenEntry>
 
     /** Forgets entries recorded before [cutoffMs]. Retention must be >= packet lifetime. */
     suspend fun purgeOlderThan(cutoffMs: Long): Int

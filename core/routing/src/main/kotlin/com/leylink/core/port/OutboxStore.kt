@@ -30,6 +30,12 @@ interface OutboxStore {
      */
     suspend fun markSent(msgId: MsgId, ttl: Int, peer: NodeId)
 
+    /**
+     * The peer told us (sync summary) it already holds [msgId] with best TTL [peerBestTtl]. If our stored
+     * version has a ttl <= that, there is nothing to send to this peer: mark it as sent.
+     */
+    suspend fun markPeerHas(peer: NodeId, msgId: MsgId, peerBestTtl: Int)
+
     /** Removes entries created before [cutoffMs]. Returns how many were removed. */
     suspend fun expireOlderThan(cutoffMs: Long): Int
 
